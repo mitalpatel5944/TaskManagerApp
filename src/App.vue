@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import { BASE_URL } from './constant.js'
+import { API_GET_TASKS, API_CREATE_TASK, API_UPDATE_TASK } from './constant.js'
 import moment from 'moment'
 
 type Task = {
   id: number
   title: string
-  status: string
+  completed: string
   created_at: string
 }
 
@@ -23,7 +23,7 @@ async function fetchTasks() {
   loading.value = true
   error.value = null
   try {
-    const res = await fetch(`${BASE_URL}/tasks`)
+    const res = await fetch(API_GET_TASKS)
     const response = await res.json()
     console.log('API response:', response)
     if(response.data === undefined) {
@@ -41,6 +41,26 @@ error.value = 'Something Went Wrong. Please try again later.'
 
 
 
+async function toggleTask(task: Task) {
+  const newStatus = !task.completed
+
+  try {
+ const res = await fetch(API_UPDATE_TASK(task.id), {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ completed: newStatus }),
+    })
+    const response = await res.json()
+    console.log('Toggle response:', response)
+    if (!res.ok) {
+      error.value = 'Failed to update task'
+      return
+    }
+    await fetchTasks()
+  } catch {
+  }
+}
+
 async function createTask() {
   titleError.value = null
 
@@ -51,7 +71,7 @@ async function createTask() {
 
   submitLoader.value = true
   try {
-    const res = await fetch(`${BASE_URL}/tasks`, {
+    const res = await fetch(API_CREATE_TASK, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ title: newTitle.value.trim() }),
@@ -99,17 +119,22 @@ async function createTask() {
 
       <ul v-else class="task-list">
         <li
-          v-for="task in tasks"
+          v-for="task in tasks.reverse()"
           :key="task.id"
           class="task-item"
         >
-          <div>
+          <label class="task-main">
+            <input
+              v-if="!task.completed"
+              type="checkbox"
+              @change="toggleTask(task)"
+            />
             <span class="task-title">{{ task.title }}</span>
-          </div>
+          </label>
 
           <div class="task-meta">
-            <span class="badge" :class="task.status === 'completed' ? 'completed' : 'pending'">
-              {{ task.status === 'completed' ? 'Completed' : 'Pending' }}
+            <span class="badge" :class="task.completed === 'completed' ? 'completed' : 'pending'">
+              {{ task.completed ? 'Completed' : 'Pending' }}
             </span>
             <span class="due">{{ moment(task.created_at).format('MMM D, YYYY') }}</span>
           </div>

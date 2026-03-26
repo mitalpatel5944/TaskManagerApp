@@ -90,13 +90,27 @@ h1 {
   gap: 12px;
 }
 
+.task-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.task-main input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
 .task-title {
   font-size: 0.95rem;
   font-weight: 500;
   color: #000;
 }
 
-.task-item.done .task-title {
+.task-title.done {
   color: #aaa;
   text-decoration: line-through;
 }
