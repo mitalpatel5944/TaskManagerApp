@@ -13,6 +13,11 @@ type Task = {
 const tasks = ref<Task[]>([])
 const loading = ref(true)
 const error = ref<string | null>(null)
+const newTitle = ref('')
+const titleError = ref<string | null>(null)
+const submitLoader = ref(false)
+
+onMounted(fetchTasks)
 
 async function fetchTasks() {
   loading.value = true
@@ -25,15 +30,41 @@ async function fetchTasks() {
 error.value = 'Something Went Wrong. Please try again later.'
     }
     tasks.value =  response.data ?? []
-  } catch (e: unknown) {
+  } catch (e: any) {
     error.value = e instanceof Error ? e.message : 'Failed to load tasks'
   } finally {
     loading.value = false
   }
 }
 
-onMounted(fetchTasks)
 
+
+
+
+async function createTask() {
+  titleError.value = null
+
+  if (!newTitle.value.trim()) {
+    titleError.value = 'Title is required'
+    return
+  }
+
+  submitLoader.value = true
+  try {
+    const res = await fetch(`${BASE_URL}/tasks`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title: newTitle.value.trim() }),
+    })
+    if (!res.ok)  titleError.value = 'Failed to create task'
+    newTitle.value = ''
+    await fetchTasks()
+  } catch (e: any) {
+    titleError.value = e instanceof Error ? e.message : 'Failed to create task'
+  } finally {
+    submitLoader.value = false
+  }
+}
 </script>
 
 <template>
@@ -44,6 +75,21 @@ onMounted(fetchTasks)
       </header>
 
     
+      <form class="add-form" @submit.prevent="createTask">
+        <div class="input-wrap">
+          <input
+            v-model="newTitle"
+            type="text"
+            placeholder="Enter task title..."
+            :disabled="submitLoader"
+          />
+          <button type="submit" :disabled="submitLoader">
+            {{ submitLoader ? 'Adding…' : 'Add Task' }}
+          </button>
+        </div>
+        <p v-if="titleError" class="field-error">{{ titleError }}</p>
+      </form>
+
       <div v-if="loading" class="state-message">Loading tasks…</div>
 
       <div v-else-if="error" class="state-message error">
