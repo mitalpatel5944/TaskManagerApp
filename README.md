@@ -1,6 +1,6 @@
 # Task Manager App
 
-A Vue 3 task management app that connects to a REST API to create, view, toggle, and delete tasks.
+A Vue 3 task management app that connects to a REST API to create, view, update, and delete tasks.
 
 ---
 
@@ -54,7 +54,7 @@ src/
 ├── App.vue              # Root component — state & API calls
 ├── constant.js          # API endpoint constants
 ├── main.ts              # App entry point
-└── style.css            # Global styles with dark mode support
+└── style.css            # Global styles
 ```
 
 ---
@@ -78,6 +78,5 @@ Base URL proxied via Vite dev server to avoid CORS:
 - **CORS**: Handled via Vite proxy in development. For production, the API server must set `Access-Control-Allow-Origin` headers.
 - **State**: Local `ref` state in `App.vue` — kept simple since there is only one view. Pinia store scaffolding exists in `src/stores/taskStore.ts` for future expansion.
 - **Optimistic updates**: Skipped for delete/create (re-fetches instead) to keep consistency with server state.
-- **Dark mode**: Implemented with CSS class toggling (`.dark`) instead of `prefers-color-scheme` so the user's manual preference takes priority. Persisted in `localStorage`.
 - **Moment.js**: Used for date formatting per the project requirement. For a smaller bundle, `date-fns` or native `Intl.DateTimeFormat` could replace it.
 - **Error handling**: 400 and 404 are mapped to friendly messages. Other errors show a generic fallback.
