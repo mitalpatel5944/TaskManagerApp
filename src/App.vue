@@ -85,6 +85,21 @@ async function createTask() {
     submitLoader.value = false
   }
 }
+
+async function deleteTask(id: number) {
+  try {
+    const res = await fetch(API_UPDATE_TASK(id), {
+      method: 'DELETE',
+    })
+    if (!res.ok) {
+      error.value = 'Failed to delete task'
+      return
+    }
+    await fetchTasks()
+  } catch (e: any) {
+    error.value = e instanceof Error ? e.message : 'Failed to delete task'
+  }
+}
 </script>
 
 <template>
@@ -129,14 +144,22 @@ async function createTask() {
               type="checkbox"
               @change="toggleTask(task)"
             />
+            <div class="column">
+
             <span class="task-title">{{ task.title }}</span>
+            <span class="due">{{ moment(task.created_at).format('MMM D, YYYY') }}</span>
+            </div>
+
           </label>
 
           <div class="task-meta">
             <span class="badge" :class="task.completed === 'completed' ? 'completed' : 'pending'">
               {{ task.completed ? 'Completed' : 'Pending' }}
             </span>
-            <span class="due">{{ moment(task.created_at).format('MMM D, YYYY') }}</span>
+             <button type="submit" class="delete-btn" @click="deleteTask(task.id)">
+            Delete
+          </button>
+
           </div>
         </li>
       </ul>

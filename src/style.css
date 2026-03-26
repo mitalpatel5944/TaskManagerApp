@@ -67,6 +67,23 @@ h1 {
   cursor: not-allowed;
 }
 
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.delete-btn {
+  border: 1px solid #c62828;
+  background: transparent;
+  color: #c62828;
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
 .field-error {
   margin-top: 6px;
   font-size: 0.8rem;
