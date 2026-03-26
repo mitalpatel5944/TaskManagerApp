@@ -139,7 +139,7 @@ async function deleteTask(id: number) {
 
       <ul v-else class="task-list">
         <li
-          v-for="task in tasks.reverse()"
+          v-for="task in tasks"
           :key="task.id"
           class="task-item"
         >
