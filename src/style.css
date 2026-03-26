@@ -161,6 +161,19 @@ h1 {
   color: #888;
 }
 
+.spinner {
+  width: 22px;
+  height: 22px;
+  border: 3px solid #e0e0e0;
+  border-top-color: #222;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 .state-message {
   text-align: center;
   padding: 40px 0;

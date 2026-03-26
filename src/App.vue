@@ -2,6 +2,7 @@
 import { onMounted, ref } from 'vue'
 import { API_GET_TASKS, API_CREATE_TASK, API_UPDATE_TASK } from './constant.js'
 import moment from 'moment'
+import { getErrorMessage } from './utils/errorHandler'
 
 type Task = {
   id: number
@@ -16,6 +17,7 @@ const error = ref<string | null>(null)
 const newTitle = ref('')
 const titleError = ref<string | null>(null)
 const submitLoader = ref(false)
+
 
 onMounted(fetchTasks)
 
@@ -53,7 +55,7 @@ async function toggleTask(task: Task) {
     const response = await res.json()
     console.log('Toggle response:', response)
     if (!res.ok) {
-      error.value = 'Failed to update task'
+      error.value = getErrorMessage(res.status, 'Failed to update task')
       return
     }
     await fetchTasks()
@@ -76,7 +78,7 @@ async function createTask() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ title: newTitle.value.trim() }),
     })
-    if (!res.ok)  titleError.value = 'Failed to create task'
+    if (!res.ok) { titleError.value = getErrorMessage(res.status, 'Failed to create task'); return }
     newTitle.value = ''
     await fetchTasks()
   } catch (e: any) {
@@ -92,7 +94,7 @@ async function deleteTask(id: number) {
       method: 'DELETE',
     })
     if (!res.ok) {
-      error.value = 'Failed to delete task'
+      error.value = getErrorMessage(res.status, 'Failed to delete task')
       return
     }
     await fetchTasks()
@@ -125,7 +127,10 @@ async function deleteTask(id: number) {
         <p v-if="titleError" class="field-error">{{ titleError }}</p>
       </form>
 
-      <div v-if="loading" class="state-message">Loading tasks…</div>
+      <div v-if="loading" class="state-message">
+        <span class="spinner"></span>
+        Loading tasks…
+      </div>
 
       <div v-else-if="error" class="state-message error">
         {{ error }}
