@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { BASE_URL } from './constant.js'
+import moment from 'moment'
 
 type Task = {
   id: number
@@ -33,7 +34,6 @@ error.value = 'Something Went Wrong. Please try again later.'
 
 onMounted(fetchTasks)
 
-
 </script>
 
 <template>
@@ -57,7 +57,7 @@ onMounted(fetchTasks)
           :key="task.id"
           class="task-item"
         >
-          <div class="task-main">
+          <div>
             <span class="task-title">{{ task.title }}</span>
           </div>
 
@@ -65,7 +65,7 @@ onMounted(fetchTasks)
             <span class="badge" :class="task.status === 'completed' ? 'completed' : 'pending'">
               {{ task.status === 'completed' ? 'Completed' : 'Pending' }}
             </span>
-            <span class="due">{{ task.created_at }}</span>
+            <span class="due">{{ moment(task.created_at).format('MMM D, YYYY') }}</span>
           </div>
         </li>
       </ul>
