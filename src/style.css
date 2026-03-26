@@ -90,6 +90,50 @@ h1 {
   color: #c62828;
 }
 
+.filter-bar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.search-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #aaa;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  outline: none;
+  min-width: 160px;
+}
+
+.search-input:focus {
+  border-color: #888;
+}
+
+.filter-btns {
+  display: flex;
+  gap: 6px;
+}
+
+.filter-btn {
+  padding: 8px 14px;
+  border: 1px solid #e0e0e0;
+  background: #fff;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: #555;
+}
+
+.filter-btn.active {
+  background: #222;
+  color: #fff;
+  border-color: #222;
+}
+
 .task-list {
   list-style: none;
   display: grid;

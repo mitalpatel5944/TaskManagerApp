@@ -17,7 +17,8 @@ const error = ref<string | null>(null)
 const newTitle = ref('')
 const titleError = ref<string | null>(null)
 const submitLoader = ref(false)
-
+const search = ref('')
+const completedFilter = ref<'all' | 'true' | 'false'>('all')
 
 onMounted(fetchTasks)
 
@@ -25,18 +26,28 @@ async function fetchTasks() {
   loading.value = true
   error.value = null
   try {
-    const res = await fetch(API_GET_TASKS)
+    const params = new URLSearchParams()
+    if (search.value.trim()) params.set('search', search.value.trim())
+    if (completedFilter.value !== 'all') params.set('completed', completedFilter.value)
+    const url = params.toString() ? `${API_GET_TASKS}?${params}` : API_GET_TASKS
+
+    const res = await fetch(url)
     const response = await res.json()
     console.log('API response:', response)
     if(response.data === undefined) {
-error.value = 'Something Went Wrong. Please try again later.'
+      error.value = 'Something Went Wrong. Please try again later.'
     }
-    tasks.value =  response.data ?? []
+    tasks.value = response.data ?? []
   } catch (e: any) {
     error.value = e instanceof Error ? e.message : 'Failed to load tasks'
   } finally {
     loading.value = false
   }
+}
+
+function applyFilter(val: 'all' | 'true' | 'false') {
+  completedFilter.value = val
+  fetchTasks()
 }
 
 
@@ -126,6 +137,21 @@ async function deleteTask(id: number) {
         </div>
         <p v-if="titleError" class="field-error">{{ titleError }}</p>
       </form>
+
+      <div class="filter-bar">
+        <input
+          v-model="search"
+          type="text"
+          class="search-input"
+          placeholder="Search tasks..."
+          @input="fetchTasks"
+        />
+        <div class="filter-btns">
+          <button :class="['filter-btn', { active: completedFilter === 'all' }]" @click="applyFilter('all')">All</button>
+          <button :class="['filter-btn', { active: completedFilter === 'false' }]" @click="applyFilter('false')">Pending</button>
+          <button :class="['filter-btn', { active: completedFilter === 'true' }]" @click="applyFilter('true')">Completed</button>
+        </div>
+      </div>
 
       <div v-if="loading" class="state-message">
         <span class="spinner"></span>
