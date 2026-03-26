@@ -1,24 +1,19 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { API_GET_TASKS, API_CREATE_TASK, API_UPDATE_TASK } from './constant.js'
-import moment from 'moment'
 import { getErrorMessage } from './utils/errorHandler'
-
-type Task = {
-  id: number
-  title: string
-  completed: string
-  created_at: string
-}
+import TaskItem from './components/TaskItem.vue'
+import TaskForm from './components/TaskForm.vue'
+import SearchFilter from './components/SearchFilter.vue'
+import type { Task, CompletedFilter } from './types/task'
 
 const tasks = ref<Task[]>([])
 const loading = ref(true)
 const error = ref<string | null>(null)
-const newTitle = ref('')
 const titleError = ref<string | null>(null)
 const submitLoader = ref(false)
 const search = ref('')
-const completedFilter = ref<'all' | 'true' | 'false'>('all')
+const completedFilter = ref<CompletedFilter>('all')
 
 onMounted(fetchTasks)
 
@@ -33,8 +28,7 @@ async function fetchTasks() {
 
     const res = await fetch(url)
     const response = await res.json()
-    console.log('API response:', response)
-    if(response.data === undefined) {
+    if (response.data === undefined) {
       error.value = 'Something Went Wrong. Please try again later.'
     }
     tasks.value = response.data ?? []
@@ -45,52 +39,17 @@ async function fetchTasks() {
   }
 }
 
-function applyFilter(val: 'all' | 'true' | 'false') {
-  completedFilter.value = val
-  fetchTasks()
-}
-
-
-
-
-
-async function toggleTask(task: Task) {
-  const newStatus = !task.completed
-
-  try {
- const res = await fetch(API_UPDATE_TASK(task.id), {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ completed: newStatus }),
-    })
-    const response = await res.json()
-    console.log('Toggle response:', response)
-    if (!res.ok) {
-      error.value = getErrorMessage(res.status, 'Failed to update task')
-      return
-    }
-    await fetchTasks()
-  } catch {
-  }
-}
-
-async function createTask() {
+async function createTask(title: string) {
   titleError.value = null
-
-  if (!newTitle.value.trim()) {
-    titleError.value = 'Title is required'
-    return
-  }
-
+  if (!title.trim()) { titleError.value = 'Title is required'; return }
   submitLoader.value = true
   try {
     const res = await fetch(API_CREATE_TASK, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title: newTitle.value.trim() }),
+      body: JSON.stringify({ title: title.trim() }),
     })
     if (!res.ok) { titleError.value = getErrorMessage(res.status, 'Failed to create task'); return }
-    newTitle.value = ''
     await fetchTasks()
   } catch (e: any) {
     titleError.value = e instanceof Error ? e.message : 'Failed to create task'
@@ -99,19 +58,37 @@ async function createTask() {
   }
 }
 
+async function toggleTask(task: Task) {
+  const newStatus = !task.completed
+  try {
+    const res = await fetch(API_UPDATE_TASK(task.id), {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ completed: newStatus }),
+    })
+    if (!res.ok) { error.value = getErrorMessage(res.status, 'Failed to update task'); return }
+    await fetchTasks()
+  } catch {}
+}
+
 async function deleteTask(id: number) {
   try {
-    const res = await fetch(API_UPDATE_TASK(id), {
-      method: 'DELETE',
-    })
-    if (!res.ok) {
-      error.value = getErrorMessage(res.status, 'Failed to delete task')
-      return
-    }
+    const res = await fetch(API_UPDATE_TASK(id), { method: 'DELETE' })
+    if (!res.ok) { error.value = getErrorMessage(res.status, 'Failed to delete task'); return }
     await fetchTasks()
   } catch (e: any) {
     error.value = e instanceof Error ? e.message : 'Failed to delete task'
   }
+}
+
+function onSearchUpdate(val: string) {
+  search.value = val
+  fetchTasks()
+}
+
+function onFilterUpdate(val: CompletedFilter) {
+  completedFilter.value = val
+  fetchTasks()
 }
 </script>
 
@@ -119,39 +96,17 @@ async function deleteTask(id: number) {
   <main class="task-page">
     <section class="task-panel" aria-label="Task overview">
       <header class="panel-header">
-          <h1>Task List</h1>
+        <h1>Task List</h1>
       </header>
 
-    
-      <form class="add-form" @submit.prevent="createTask">
-        <div class="input-wrap">
-          <input
-            v-model="newTitle"
-            type="text"
-            placeholder="Enter task title..."
-            :disabled="submitLoader"
-          />
-          <button type="submit" :disabled="submitLoader">
-            {{ submitLoader ? 'Adding…' : 'Add Task' }}
-          </button>
-        </div>
-        <p v-if="titleError" class="field-error">{{ titleError }}</p>
-      </form>
+      <TaskForm :loading="submitLoader" :error="titleError" @submit="createTask" />
 
-      <div class="filter-bar">
-        <input
-          v-model="search"
-          type="text"
-          class="search-input"
-          placeholder="Search tasks..."
-          @input="fetchTasks"
-        />
-        <div class="filter-btns">
-          <button :class="['filter-btn', { active: completedFilter === 'all' }]" @click="applyFilter('all')">All</button>
-          <button :class="['filter-btn', { active: completedFilter === 'false' }]" @click="applyFilter('false')">Pending</button>
-          <button :class="['filter-btn', { active: completedFilter === 'true' }]" @click="applyFilter('true')">Completed</button>
-        </div>
-      </div>
+      <SearchFilter
+        :search="search"
+        :filter="completedFilter"
+        @update:search="onSearchUpdate"
+        @update:filter="onFilterUpdate"
+      />
 
       <div v-if="loading" class="state-message">
         <span class="spinner"></span>
@@ -164,35 +119,13 @@ async function deleteTask(id: number) {
       </div>
 
       <ul v-else class="task-list">
-        <li
+        <TaskItem
           v-for="task in tasks"
           :key="task.id"
-          class="task-item"
-        >
-          <label class="task-main">
-            <input
-              v-if="!task.completed"
-              type="checkbox"
-              @change="toggleTask(task)"
-            />
-            <div class="column">
-
-            <span class="task-title">{{ task.title }}</span>
-            <span class="due">{{ moment(task.created_at).format('MMM D, YYYY') }}</span>
-            </div>
-
-          </label>
-
-          <div class="task-meta">
-            <span class="badge" :class="task.completed === 'completed' ? 'completed' : 'pending'">
-              {{ task.completed ? 'Completed' : 'Pending' }}
-            </span>
-             <button type="submit" class="delete-btn" @click="deleteTask(task.id)">
-            Delete
-          </button>
-
-          </div>
-        </li>
+          :task="task"
+          @toggle="toggleTask"
+          @delete="deleteTask"
+        />
       </ul>
     </section>
   </main>
